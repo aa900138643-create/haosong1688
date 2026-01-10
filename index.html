@@ -3,19 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <title>SVIP 專屬 - 頂級預約服務</title>
-    <meta name="description" content="精選推薦，熱門預約中！點擊查看更多詳細資料與照片。">
-    
+    <meta name="description" content="VIP 專屬預約通道">
     <meta property="og:title" content="SVIP 專屬 - 頂級預約服務" />
-    <meta property="og:description" content="精選推薦，熱門預約中！點擊查看更多詳細資料與照片。" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://svip516888.netlify.app/" />
+    <meta property="og:description" content="VIP 專屬預約通道" />
     <meta property="og:image" content="https://i.imgur.com/ftZXl7Z.png" />
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    
     <style>
         body { background-color: #111; color: #fff; font-family: 'Segoe UI', sans-serif; user-select: none; -webkit-user-select: none; }
         [v-cloak] { display: none !important; }
@@ -64,7 +60,13 @@
                 <div v-else class="grid grid-cols-2 md:grid-cols-4 gap-4 pb-10">
                     <div v-for="item in products" :key="item.id" @click="openDetail(item)" 
                          class="bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg border border-gray-800 cursor-pointer hover:border-yellow-500 transition relative group"
-                         :class="item.isTop ? 'border-l-4 border-l-yellow-500' : ''"> <div v-if="item.isTop" class="absolute top-2 left-2 bg-gradient-to-r from-red-600 to-red-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg z-20 flex items-center gap-1">
+                         :class="[item.isTop ? 'border-l-4 border-l-yellow-500' : '', item.isFull ? 'opacity-60' : '']"> 
+                        
+                        <div v-if="item.isFull" class="absolute top-0 left-0 bg-[#FF8C42] text-white text-[10px] px-2 py-1 font-bold z-30">
+                            今日已滿
+                        </div>
+
+                        <div v-if="item.isTop" class="absolute top-0 right-0 bg-gradient-to-l from-red-600 to-red-500 text-white text-[10px] font-bold px-2 py-1 z-20 flex items-center gap-1 rounded-bl-lg">
                             <i class="fas fa-fire"></i> 熱門
                         </div>
 
@@ -96,6 +98,8 @@
                     </div>
                 </div>
                 <div class="w-full md:w-1/2 p-6 flex flex-col h-[50vh] md:h-auto overflow-y-auto">
+                    <div v-if="detailModal.product.isFull" class="bg-orange-500 text-black text-center font-bold py-1 mb-2 rounded">⚠️ 今日已滿 ⚠️</div>
+
                     <h2 class="text-3xl font-bold text-yellow-500 mb-2">{{ detailModal.product.name }}</h2>
                     <div class="flex flex-wrap gap-2 mb-4">
                         <span class="bg-gray-800 text-xs px-2 py-1 rounded text-gray-300">{{ detailModal.product.tags }}</span>
