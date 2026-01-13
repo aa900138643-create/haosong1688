@@ -34,7 +34,8 @@
         <main class="pt-16">
             <div v-if="layout.banners.length > 0" class="relative w-full h-[50vh] md:h-[60vh] overflow-hidden bg-gray-900 group">
                 <div v-for="(img, index) in layout.banners" :key="img" class="absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out" :class="currentBannerIndex === index ? 'opacity-100 z-10' : 'opacity-0 z-0'">
-                    <img :src="img" class="w-full h-full object-cover" style="object-position: center 20%;">
+                    <video v-if="isVideo(img)" :src="img" class="w-full h-full object-cover" autoplay loop muted playsinline></video>
+                    <img v-else :src="img" class="w-full h-full object-cover" style="object-position: center 20%;">
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-[#111] via-transparent to-transparent z-20 pointer-events-none"></div>
                 <div class="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-30">
@@ -62,17 +63,15 @@
                          class="bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg border border-gray-800 cursor-pointer hover:border-yellow-500 transition relative group"
                          :class="[item.isTop ? 'border-l-4 border-l-yellow-500' : '', item.isFull ? 'opacity-60' : '']"> 
                         
-                        <div v-if="item.isFull" class="absolute top-0 left-0 bg-[#FF8C42] text-white text-[10px] px-2 py-1 font-bold z-30">
-                            今日已滿
-                        </div>
-
-                        <div v-if="item.isTop" class="absolute top-0 right-0 bg-gradient-to-l from-red-600 to-red-500 text-white text-[10px] font-bold px-2 py-1 z-20 flex items-center gap-1 rounded-bl-lg">
-                            <i class="fas fa-fire"></i> 熱門
-                        </div>
+                        <div v-if="item.isFull" class="absolute top-0 left-0 bg-[#FF8C42] text-white text-[10px] px-2 py-1 font-bold z-30">今日已滿</div>
+                        <div v-if="item.isTop" class="absolute top-0 right-0 bg-gradient-to-l from-red-600 to-red-500 text-white text-[10px] font-bold px-2 py-1 z-20 flex items-center gap-1 rounded-bl-lg"><i class="fas fa-fire"></i> 熱門</div>
 
                         <div class="relative w-full aspect-[3/4] overflow-hidden">
                             <div class="flex overflow-x-auto snap-x hide-scrollbar h-full w-full bg-gray-900">
-                                <img v-for="(img, index) in ensureArray(item.images)" :key="index" :src="img" class="w-full h-full object-cover flex-shrink-0 snap-center" loading="lazy" decoding="async">
+                                <div v-for="(media, index) in ensureArray(item.images)" :key="index" class="w-full h-full flex-shrink-0 snap-center relative">
+                                    <video v-if="isVideo(media)" :src="media" class="w-full h-full object-cover" autoplay loop muted playsinline></video>
+                                    <img v-else :src="media" class="w-full h-full object-cover" loading="lazy">
+                                </div>
                             </div>
                             <div v-if="ensureArray(item.images).length > 1" class="absolute bottom-2 left-0 right-0 flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition"><div v-for="n in ensureArray(item.images).length" :key="n" class="w-1.5 h-1.5 rounded-full bg-white/50"></div></div>
                         </div>
@@ -92,136 +91,16 @@
             <button @click="closeDetail" class="absolute top-4 right-4 z-50 text-white bg-black/50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-700"><i class="fas fa-times text-xl"></i></button>
             <div class="bg-[#111] w-full h-full md:h-auto md:max-h-[90vh] md:max-w-4xl md:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl border border-gray-800">
                 <div class="w-full md:w-1/2 h-[50vh] md:h-[600px] bg-black relative">
-                    <img :src="detailModal.currentImage" class="w-full h-full object-contain">
+                    <video v-if="isVideo(detailModal.currentImage)" :src="detailModal.currentImage" class="w-full h-full object-contain" autoplay loop muted playsinline controls></video>
+                    <img v-else :src="detailModal.currentImage" class="w-full h-full object-contain">
+                    
                     <div class="absolute bottom-4 left-0 right-0 flex justify-center gap-2 px-4 overflow-x-auto hide-scrollbar">
-                        <div v-for="(img, idx) in ensureArray(detailModal.product.images)" :key="idx" @click.stop="detailModal.currentImage = img" class="w-12 h-12 rounded border-2 overflow-hidden flex-shrink-0 cursor-pointer" :class="detailModal.currentImage === img ? 'border-yellow-500' : 'border-gray-600'"><img :src="img" class="w-full h-full object-cover"></div>
+                        <div v-for="(media, idx) in ensureArray(detailModal.product.images)" :key="idx" @click.stop="detailModal.currentImage = media" class="w-12 h-12 rounded border-2 overflow-hidden flex-shrink-0 cursor-pointer relative" :class="detailModal.currentImage === media ? 'border-yellow-500' : 'border-gray-600'">
+                            <i v-if="isVideo(media)" class="fas fa-play absolute inset-0 flex items-center justify-center text-white/80 text-xs z-10"></i>
+                            <video v-if="isVideo(media)" :src="media" class="w-full h-full object-cover"></video>
+                            <img v-else :src="media" class="w-full h-full object-cover">
+                        </div>
                     </div>
                 </div>
                 <div class="w-full md:w-1/2 p-6 flex flex-col h-[50vh] md:h-auto overflow-y-auto">
-                    <div v-if="detailModal.product.isFull" class="bg-orange-500 text-black text-center font-bold py-1 mb-2 rounded">⚠️ 今日已滿 ⚠️</div>
-
-                    <h2 class="text-3xl font-bold text-yellow-500 mb-2">{{ detailModal.product.name }}</h2>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <span class="bg-gray-800 text-xs px-2 py-1 rounded text-gray-300">{{ detailModal.product.tags }}</span>
-                        <span class="bg-gray-800 text-xs px-2 py-1 rounded text-gray-300">{{ detailModal.product.height || '?' }}cm</span>
-                        <span class="bg-gray-800 text-xs px-2 py-1 rounded text-gray-300">{{ detailModal.product.weight || '?' }}kg</span>
-                        <span v-if="detailModal.product.cup" class="bg-gray-800 text-xs px-2 py-1 rounded text-gray-300">{{ detailModal.product.cup }}罩杯</span>
-                    </div>
-                    <div class="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-grow mb-6">{{ detailModal.product.details || '暫無詳細介紹...' }}</div>
-                    <div class="mb-6 border-t border-gray-800 pt-4"><p class="text-2xl font-bold text-white">價格: ${{ detailModal.product.price }}</p></div>
-                    <button @click="handleBooking(detailModal.product)" class="w-full bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-4 rounded-xl text-lg shadow-lg flex items-center justify-center gap-2 active:scale-95 transition"><i class="fab fa-line text-xl"></i> 要約她</button>
-                    <p class="text-center text-xs text-gray-500 mt-2">複製預約內容並前往 LINE</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="fixed bottom-6 right-6 flex flex-col gap-4 z-40">
-            <a :href="config.lineUrl" target="_blank" class="w-14 h-14 bg-[#00B900] rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition border-2 border-white/20"><i class="fab fa-line text-3xl text-white"></i></a>
-        </div>
-
-        <div v-if="toast.show" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/90 text-yellow-500 px-6 py-4 rounded-xl border border-yellow-500/50 shadow-2xl flex flex-col items-center z-[100] toast-anim"><i class="fas fa-check-circle text-3xl mb-2"></i><p class="font-bold text-lg">已複製預約訊息！</p><p class="text-xs text-gray-400">正在開啟 LINE...</p></div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        // 純讀取，不需 Auth
-        import { getFirestore, collection, doc, query, orderBy, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-        import { createApp, ref, onMounted } from "https://unpkg.com/vue@3/dist/vue.esm-browser.js";
-
-        // ==========================================
-        // 1. 已填入你的設定 (直接使用即可)
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyAps3bNHrLZCmwCG3am2RZkyQmSmY_PmRo",
-            authDomain: "haosong168-a6bfa.firebaseapp.com",
-            projectId: "haosong168-a6bfa",
-            storageBucket: "haosong168-a6bfa.firebasestorage.app",
-            messagingSenderId: "633968472102",
-            appId: "1:633968472102:web:410d466ce7c88a644636e7",
-            measurementId: "G-M7H8ZDV93Q"
-        };
-        const siteConfig = {
-            logoUrl: 'https://i.imgur.com/ftZXl7Z.png',
-            lineUrl: 'https://line.me/ti/p/eTSdL_uhBA',
-            siteName: 'SVIP 專屬'
-        };
-
-        createApp({
-            setup() {
-                const app = initializeApp(firebaseConfig);
-                const db = getFirestore(app);
-                
-                const products = ref([]);
-                const loading = ref(true);
-                const config = ref(siteConfig);
-                const toast = ref({ show: false });
-                const layout = ref({ banners: [], announcement: '' });
-                const currentBannerIndex = ref(0);
-                const detailModal = ref({ open: false, product: null, currentImage: '' });
-
-                onMounted(() => {
-                    const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
-                    onSnapshot(q, (snapshot) => {
-                        const rawProducts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                        // 排序邏輯：置頂(isTop=true)排前面，剩下照時間
-                        products.value = rawProducts.sort((a, b) => {
-                            const topA = a.isTop ? 1 : 0;
-                            const topB = b.isTop ? 1 : 0;
-                            if (topA !== topB) return topB - topA;
-                            return 0;
-                        });
-                        loading.value = false;
-                    });
-                    fetchLayoutSettings();
-                    setInterval(() => {
-                        if (layout.value.banners.length > 1) {
-                            currentBannerIndex.value = (currentBannerIndex.value + 1) % layout.value.banners.length;
-                        }
-                    }, 4000);
-                });
-
-                const fetchLayoutSettings = async () => {
-                    try {
-                        const docRef = doc(db, "settings", "global");
-                        const docSnap = await getDoc(docRef);
-                        if (docSnap.exists()) {
-                            layout.value = docSnap.data();
-                        }
-                    } catch (e) { console.log("No Settings"); }
-                };
-
-                const ensureArray = (imgs) => Array.isArray(imgs) ? imgs : (imgs ? [imgs] : ['https://placehold.co/600x800']);
-                
-                const openDetail = (item) => {
-                    detailModal.value = { open: true, product: item, currentImage: ensureArray(item.images)[0] };
-                };
-                const closeDetail = () => detailModal.value.open = false;
-                
-                // 預約邏輯：不含價格
-                const handleBooking = (item) => {
-                    const text = `你好，我想預約：${item.name}\n${item.tags}`;
-                    navigator.clipboard.writeText(text).then(() => {
-                        toast.value.show = true;
-                        setTimeout(() => { toast.value.show = false; window.location.href = config.value.lineUrl; }, 800);
-                    }).catch(() => { window.location.href = config.value.lineUrl; });
-                };
-
-                // 防 F12
-                document.onkeydown = function(e) {
-                    if(e.keyCode == 123) { return false; }
-                    if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) { return false; }
-                    if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) { return false; }
-                    if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) { return false; }
-                    if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { return false; }
-                }
-
-                return {
-                    config, products, loading, layout, currentBannerIndex,
-                    detailModal, toast, ensureArray, 
-                    openDetail, closeDetail, handleBooking
-                };
-            }
-        }).mount('#app');
-    </script>
-</body>
-</html>
+                    <div v-if="detailModal.product.isFull" class="bg-orange-5
