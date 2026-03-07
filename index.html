@@ -27,12 +27,12 @@
 
     <div id="app" v-cloak>
         <header class="fixed top-0 w-full z-40 bg-black/80 backdrop-blur-md border-b border-gray-800 p-4 flex justify-center items-center h-16">
-            <img v-if="config.logoUrl" :src="config.logoUrl" class="h-10 object-contain" alt="Logo">
+            <img v-if="layout.logoUrl" :src="layout.logoUrl" class="h-10 object-contain" alt="Logo">
             <h1 v-else class="text-2xl font-bold text-yellow-500 tracking-widest">{{ config.siteName }}</h1>
         </header>
 
         <main class="pt-16">
-            <div v-if="layout.banners.length > 0" class="relative w-full h-[50vh] md:h-[60vh] overflow-hidden bg-gray-900 group">
+            <div v-if="layout.banners && layout.banners.length > 0" class="relative w-full h-[50vh] md:h-[60vh] overflow-hidden bg-gray-900 group">
                 <div v-for="(img, index) in layout.banners" :key="img" class="absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out" :class="currentBannerIndex === index ? 'opacity-100 z-10' : 'opacity-0 z-0'">
                     <video v-if="isVideo(img)" :src="img" class="w-full h-full object-cover" autoplay loop muted playsinline></video>
                     <img v-else :src="img" class="w-full h-full object-cover" style="object-position: center 20%;">
@@ -44,22 +44,52 @@
             </div>
 
             <div v-if="layout.announcement" class="bg-yellow-600/20 border-y border-yellow-600/30 py-2 overflow-hidden relative">
-                <div class="whitespace-nowrap animate-marquee flex items-center gap-4 text-yellow-400 font-bold tracking-wide px-4">
+                <div class="whitespace-nowrap flex items-center gap-4 text-yellow-400 font-bold tracking-wide px-4">
                     <marquee scrollamount="5"><i class="fas fa-bullhorn mr-2"></i> {{ layout.announcement }}</marquee>
                 </div>
             </div>
 
             <div class="px-4 max-w-7xl mx-auto mt-6">
+                
+                <div class="bg-[#1a1a1a] border border-gray-800 rounded-xl p-4 mb-8 flex flex-col md:flex-row gap-4 items-end shadow-lg">
+                    <div class="w-full md:flex-1">
+                        <label class="block text-gray-400 text-sm mb-1">搜尋</label>
+                        <input v-model="searchQuery" type="text" placeholder="輸入名稱或關鍵字..." class="w-full bg-[#111] text-white border border-gray-700 rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-500 transition">
+                    </div>
+                    
+                    <div class="w-full md:w-48">
+                        <label class="block text-gray-400 text-sm mb-1">縣市</label>
+                        <div class="relative">
+                            <select v-model="selectedCity" @change="selectedDistrict = '全部鄉鎮區'" class="w-full bg-[#111] text-white border border-gray-700 rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-500 appearance-none transition cursor-pointer">
+                                <option value="全部縣市">全部縣市</option>
+                                <option v-for="(districts, city) in locations" :key="city" :value="city">{{ city }}</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+                        </div>
+                    </div>
+
+                    <div class="w-full md:w-48">
+                        <label class="block text-gray-400 text-sm mb-1">鄉鎮區</label>
+                        <div class="relative">
+                            <select v-model="selectedDistrict" class="w-full bg-[#111] text-white border border-gray-700 rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-500 appearance-none transition cursor-pointer" :disabled="selectedCity === '全部縣市'">
+                                <option value="全部鄉鎮區">全部鄉鎮區</option>
+                                <option v-if="selectedCity !== '全部縣市'" v-for="district in availableDistricts" :key="district" :value="district">{{ district }}</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex items-center gap-2 mb-4">
                     <div class="w-1 h-6 bg-yellow-500 rounded-full"></div>
-                    <h2 class="text-xl font-bold text-white">精選推薦</h2>
+                    <h2 class="text-xl font-bold text-white">妹妹列表</h2>
                 </div>
 
                 <div v-if="loading" class="text-center py-20 text-gray-500"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">載入中...</p></div>
-                <div v-else-if="products.length === 0" class="text-center py-20 text-gray-500"><p>目前沒有資料</p></div>
+                <div v-else-if="filteredProducts.length === 0" class="text-center py-20 text-gray-500"><i class="fas fa-box-open fa-2x mb-3"></i><p>找不到符合條件的資料</p></div>
 
                 <div v-else class="grid grid-cols-2 md:grid-cols-4 gap-4 pb-10">
-                    <div v-for="item in products" :key="item.id" @click="openDetail(item)" 
+                    <div v-for="item in filteredProducts" :key="item.id" @click="openDetail(item)" 
                          class="bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg border border-gray-800 cursor-pointer hover:border-yellow-500 transition relative group"
                          :class="[item.isTop ? 'border-l-4 border-l-yellow-500' : '', item.isFull ? 'opacity-60' : '']"> 
                         
@@ -73,7 +103,6 @@
                                     <img v-else :src="media" class="w-full h-full object-cover" loading="lazy">
                                 </div>
                             </div>
-                            <div v-if="ensureArray(item.images).length > 1" class="absolute bottom-2 left-0 right-0 flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition"><div v-for="n in ensureArray(item.images).length" :key="n" class="w-1.5 h-1.5 rounded-full bg-white/50"></div></div>
                         </div>
                         <div class="p-3">
                             <div class="flex justify-between items-start">
@@ -81,6 +110,7 @@
                                 <span class="text-yellow-500 font-bold text-sm">${{ item.price }}</span>
                             </div>
                             <p class="text-xs text-gray-400 mt-1 truncate">{{ item.tags }}</p>
+                            <p v-if="item.city" class="text-[10px] text-gray-500 mt-1"><i class="fas fa-map-marker-alt"></i> {{ item.city }} {{ item.district }}</p>
                         </div>
                     </div>
                 </div>
@@ -90,61 +120,53 @@
         <div v-if="detailModal.open && detailModal.product" class="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-black/90 backdrop-blur-sm">
             <button @click="closeDetail" class="absolute top-4 right-4 z-50 text-white bg-black/50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-700"><i class="fas fa-times text-xl"></i></button>
             <div class="bg-[#111] w-full h-full md:h-auto md:max-h-[90vh] md:max-w-4xl md:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl border border-gray-800">
-                
-                <div class="w-full md:w-1/2 flex flex-col bg-black h-[50vh] md:h-auto">
+                <div class="w-full md:w-1/2 flex flex-col bg-black h-[40vh] md:h-auto">
                     <div class="relative w-full flex-grow overflow-hidden bg-black">
                         <video v-if="isVideo(detailModal.currentImage)" :src="detailModal.currentImage" class="w-full h-full object-contain" autoplay loop playsinline controls></video>
                         <img v-else :src="detailModal.currentImage" class="w-full h-full object-contain">
                     </div>
-                    
                     <div class="w-full h-20 bg-[#0a0a0a] border-t border-gray-800 flex items-center justify-center gap-2 px-4 overflow-x-auto hide-scrollbar flex-shrink-0">
                         <div v-for="(media, idx) in ensureArray(detailModal.product.images)" :key="idx" @click.stop="detailModal.currentImage = media" class="w-14 h-14 rounded border-2 overflow-hidden flex-shrink-0 cursor-pointer relative" :class="detailModal.currentImage === media ? 'border-yellow-500' : 'border-gray-600 opacity-50 hover:opacity-100'">
                             <i v-if="isVideo(media)" class="fas fa-play absolute inset-0 flex items-center justify-center text-white/80 text-xs z-10"></i>
-                            <video v-if="isVideo(media)" :src="media" class="w-full h-full object-cover" muted></video>
                             <img v-else :src="media" class="w-full h-full object-cover">
                         </div>
                     </div>
                 </div>
-
-                <div class="w-full md:w-1/2 p-6 flex flex-col h-[50vh] md:h-auto overflow-y-auto">
+                <div class="w-full md:w-1/2 p-6 flex flex-col h-[60vh] md:h-auto overflow-y-auto">
                     <div v-if="detailModal.product.isFull" class="bg-orange-500 text-black text-center font-bold py-1 mb-2 rounded">⚠️ 今日已滿 ⚠️</div>
-
                     <h2 class="text-3xl font-bold text-yellow-500 mb-2">{{ detailModal.product.name }}</h2>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <span class="bg-gray-800 text-xs px-2 py-1 rounded text-gray-300">{{ detailModal.product.tags }}</span>
-                        <span class="bg-gray-800 text-xs px-2 py-1 rounded text-gray-300">{{ detailModal.product.height || '?' }}cm</span>
-                        <span class="bg-gray-800 text-xs px-2 py-1 rounded text-gray-300">{{ detailModal.product.weight || '?' }}kg</span>
-                        <span v-if="detailModal.product.cup" class="bg-gray-800 text-xs px-2 py-1 rounded text-gray-300">{{ detailModal.product.cup }}罩杯</span>
+                    <div class="flex flex-wrap gap-2 mb-4 text-xs">
+                        <span class="bg-gray-800 px-2 py-1 rounded text-gray-300">{{ detailModal.product.city }} {{ detailModal.product.district }}</span>
+                        <span class="bg-gray-800 px-2 py-1 rounded text-gray-300">{{ detailModal.product.height }}cm / {{ detailModal.product.weight }}kg / {{ detailModal.product.cup }}杯</span>
                     </div>
-                    <div class="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-grow mb-6">{{ detailModal.product.details || '暫無詳細介紹...' }}</div>
-                    <div class="mb-6 border-t border-gray-800 pt-4"><p class="text-2xl font-bold text-white">價格: ${{ detailModal.product.price }}</p></div>
-                    <button @click="handleBooking(detailModal.product)" class="w-full bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-4 rounded-xl text-lg shadow-lg flex items-center justify-center gap-2 active:scale-95 transition"><i class="fab fa-line text-xl"></i> 要約她</button>
-                    <p class="text-center text-xs text-gray-500 mt-2">複製預約內容並前往 LINE</p>
+                    <div class="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-grow mb-6">{{ detailModal.product.details }}</div>
+                    <button @click="handleBooking(detailModal.product)" class="w-full bg-gradient-to-r from-yellow-600 to-yellow-500 text-black font-bold py-4 rounded-xl text-lg flex items-center justify-center gap-2 active:scale-95 transition"><i class="fab fa-line text-xl"></i> 我要預約</button>
                 </div>
             </div>
         </div>
 
-        <div class="fixed bottom-6 right-6 flex flex-col gap-4 z-40">
-            <a :href="config.lineUrl" target="_blank" class="w-14 h-14 bg-[#00B900] rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition border-2 border-white/20"><i class="fab fa-line text-3xl text-white"></i></a>
+        <div class="fixed bottom-6 right-6 z-40">
+            <a :href="config.lineUrl" target="_blank" class="w-14 h-14 bg-[#00B900] rounded-full flex items-center justify-center shadow-lg border-2 border-white/20"><i class="fab fa-line text-3xl text-white"></i></a>
         </div>
 
-        <div v-if="toast.show" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/90 text-yellow-500 px-6 py-4 rounded-xl border border-yellow-500/50 shadow-2xl flex flex-col items-center z-[100] toast-anim"><i class="fas fa-check-circle text-3xl mb-2"></i><p class="font-bold text-lg">已複製預約訊息！</p><p class="text-xs text-gray-400">正在開啟 LINE...</p></div>
+        <div v-if="toast.show" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/90 text-yellow-500 px-6 py-4 rounded-xl border border-yellow-500/50 z-[100] toast-anim text-center"><i class="fas fa-check-circle text-3xl mb-2"></i><p class="font-bold">已複製預約訊息！</p></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, collection, doc, query, orderBy, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-        import { createApp, ref, onMounted } from "https://unpkg.com/vue@3/dist/vue.esm-browser.js";
+        import { createApp, ref, computed, onMounted } from "https://unpkg.com/vue@3/dist/vue.esm-browser.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCyqNcAlOlTsbwUVgpZSNr4q5hYkvq-eQQ",
-  authDomain: "haosongjkf.firebaseapp.com",
-  projectId: "haosongjkf",
-  storageBucket: "haosongjkf.firebasestorage.app",
-  messagingSenderId: "126135414816",
-  appId: "1:126135414816:web:84781ef106189ec5f5cc45",
-  measurementId: "G-PKYPK679KL"
+            authDomain: "haosongjkf.firebaseapp.com",
+            projectId: "haosongjkf",
+            storageBucket: "haosongjkf.firebasestorage.app",
+            messagingSenderId: "126135414816",
+            appId: "1:126135414816:web:84781ef106189ec5f5cc45",
+            measurementId: "G-PKYPK679KL"
         };
+        
         const siteConfig = {
             lineUrl: 'https://line.me/ti/p/eTSdL_uhBA',
             siteName: '小嬌妻 SVIP 專屬'
@@ -158,31 +180,45 @@
                 const products = ref([]);
                 const loading = ref(true);
                 const config = ref(siteConfig);
+                const layout = ref({ banners: [], announcement: '', locations: {} });
                 const toast = ref({ show: false });
-                const layout = ref({ banners: [], announcement: '' });
                 const currentBannerIndex = ref(0);
                 const detailModal = ref({ open: false, product: null, currentImage: '' });
 
-                const isVideo = (url) => {
-                    if (!url) return false;
-                    return url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.webm');
-                };
+                const searchQuery = ref('');
+                const selectedCity = ref('全部縣市');
+                const selectedDistrict = ref('全部鄉鎮區');
+
+                // 地區資料現在由 layout 裡動態提供
+                const locations = computed(() => layout.value.locations || {});
+
+                const availableDistricts = computed(() => {
+                    if (selectedCity.value === '全部縣市') return [];
+                    return locations.value[selectedCity.value] || [];
+                });
+
+                const filteredProducts = computed(() => {
+                    return products.value.filter(item => {
+                        const matchQuery = !searchQuery.value || 
+                            (item.name && item.name.includes(searchQuery.value)) || 
+                            (item.tags && item.tags.includes(searchQuery.value));
+                        const matchCity = selectedCity.value === '全部縣市' || item.city === selectedCity.value;
+                        const matchDistrict = selectedDistrict.value === '全部鄉鎮區' || item.district === selectedDistrict.value;
+                        return matchQuery && matchCity && matchDistrict;
+                    });
+                });
+
+                const isVideo = (url) => url && (url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.webm'));
 
                 onMounted(() => {
-                    const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
-                    onSnapshot(q, (snapshot) => {
-                        const rawProducts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                        products.value = rawProducts.sort((a, b) => {
-                            const topA = a.isTop ? 1 : 0;
-                            const topB = b.isTop ? 1 : 0;
-                            if (topA !== topB) return topB - topA;
-                            return 0;
-                        });
+                    // 監聽產品列表
+                    onSnapshot(query(collection(db, "products"), orderBy("createdAt", "desc")), (snapshot) => {
+                        products.value = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                         loading.value = false;
                     });
                     fetchLayoutSettings();
                     setInterval(() => {
-                        if (layout.value.banners.length > 1) {
+                        if (layout.value.banners && layout.value.banners.length > 1) {
                             currentBannerIndex.value = (currentBannerIndex.value + 1) % layout.value.banners.length;
                         }
                     }, 4000);
@@ -190,12 +226,11 @@
 
                 const fetchLayoutSettings = async () => {
                     try {
-                        const docRef = doc(db, "settings", "global");
-                        const docSnap = await getDoc(docRef);
+                        const docSnap = await getDoc(doc(db, "settings", "global"));
                         if (docSnap.exists()) {
                             layout.value = docSnap.data();
                         }
-                    } catch (e) { console.log("No Settings"); }
+                    } catch (e) { console.error("Settings Error", e); }
                 };
 
                 const ensureArray = (imgs) => Array.isArray(imgs) ? imgs : (imgs ? [imgs] : ['https://placehold.co/600x800']);
@@ -206,25 +241,18 @@
                 const closeDetail = () => detailModal.value.open = false;
                 
                 const handleBooking = (item) => {
-                    const text = `你好，我想預約：${item.name}\n${item.tags}`;
+                    const text = `你好，我想預約：${item.name}\n地區：${item.city}${item.district}\n標籤：${item.tags}`;
                     navigator.clipboard.writeText(text).then(() => {
                         toast.value.show = true;
                         setTimeout(() => { toast.value.show = false; window.location.href = config.value.lineUrl; }, 800);
                     }).catch(() => { window.location.href = config.value.lineUrl; });
                 };
 
-                document.onkeydown = function(e) {
-                    if(e.keyCode == 123) { return false; }
-                    if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) { return false; }
-                    if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) { return false; }
-                    if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) { return false; }
-                    if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { return false; }
-                }
-
                 return {
                     config, products, loading, layout, currentBannerIndex,
                     detailModal, toast, ensureArray, 
-                    openDetail, closeDetail, handleBooking, isVideo
+                    openDetail, closeDetail, handleBooking, isVideo,
+                    searchQuery, selectedCity, selectedDistrict, locations, availableDistricts, filteredProducts
                 };
             }
         }).mount('#app');

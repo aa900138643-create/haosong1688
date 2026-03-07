@@ -13,7 +13,7 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
-        .toast-anim { animation: fadeIn 0.3s ease-out forwards; }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
     </style>
 </head>
 <body class="bg-[#111] text-white min-h-screen pb-20">
@@ -23,9 +23,9 @@
             <h1 class="text-xl font-bold text-red-500 tracking-widest">後台管理模式</h1>
         </header>
 
-        <main class="pt-20 px-4 max-w-lg mx-auto">
+        <main class="pt-24 px-4 max-w-2xl mx-auto">
             
-            <div v-if="!user" class="py-10 text-center space-y-4 bg-[#1a1a1a] p-6 rounded-xl border border-gray-700 shadow-2xl">
+            <div v-if="!user" class="py-10 text-center space-y-4 bg-[#1a1a1a] p-6 rounded-xl border border-gray-700 shadow-2xl max-w-md mx-auto">
                 <h2 class="text-2xl font-bold text-white mb-6">管理員登入</h2>
                 <input v-model="loginForm.email" type="email" class="w-full bg-black border border-gray-700 rounded p-3 text-white" placeholder="Email">
                 <input v-model="loginForm.password" type="password" class="w-full bg-black border border-gray-700 rounded p-3 text-white" placeholder="密碼">
@@ -36,85 +36,120 @@
                 <button @click="login" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 rounded transition mt-4">登入系統</button>
             </div>
 
-            <div v-else>
-                <div class="flex justify-between items-center mb-6 bg-gray-900 p-4 rounded-lg border border-gray-700">
-                    <h2 class="text-xl font-bold text-white">歡迎回來</h2>
-                    <button @click="logout" class="text-xs text-red-400 border border-red-900 px-3 py-1.5 rounded hover:bg-red-900 transition">登出</button>
+            <div v-else class="space-y-6">
+                <div class="flex justify-between items-center bg-gray-900/50 p-4 rounded-xl border border-gray-800">
+                    <h2 class="text-xl font-bold text-white tracking-wide">歡迎回來 大帥哥老闆</h2>
+                    <button @click="logout" class="text-xs text-red-400 border border-red-900/50 px-4 py-2 rounded-lg hover:bg-red-900/30 transition">登出</button>
                 </div>
 
-                <div class="flex gap-2 mb-6 border-b border-gray-700 pb-2">
-                    <button @click="adminTab = 'product'" :class="adminTab === 'product' ? 'text-yellow-500 border-b-2 border-yellow-500' : 'text-gray-400'" class="pb-2 px-2 font-bold transition flex-1">📦 商品管理</button>
-                    <button @click="adminTab = 'layout'" :class="adminTab === 'layout' ? 'text-yellow-500 border-b-2 border-yellow-500' : 'text-gray-400'" class="pb-2 px-2 font-bold transition flex-1">🎨 網站佈置</button>
+                <div class="flex bg-[#1a1a1a] p-1 rounded-xl border border-gray-800">
+                    <button @click="adminTab = 'product'" 
+                        :class="adminTab === 'product' ? 'bg-gray-800 text-yellow-500 shadow-md' : 'text-gray-500 hover:text-gray-300'" 
+                        class="py-3 px-4 font-bold transition-all flex-1 rounded-lg flex items-center justify-center gap-2">
+                        <i class="fas fa-box"></i> 商品管理
+                    </button>
+                    <button @click="adminTab = 'layout'" 
+                        :class="adminTab === 'layout' ? 'bg-gray-800 text-yellow-500 shadow-md' : 'text-gray-500 hover:text-gray-300'" 
+                        class="py-3 px-4 font-bold transition-all flex-1 rounded-lg flex items-center justify-center gap-2">
+                        <i class="fas fa-magic"></i> 網站佈置
+                    </button>
                 </div>
 
-                <div v-if="adminTab === 'product'" class="space-y-4 animate-fadeIn">
-                    <div class="bg-black/50 p-4 rounded border border-gray-800 relative">
-                        <h3 class="text-sm font-bold text-gray-300 mb-3">
-                            <span v-if="isEditing" class="text-green-400">✏️ 正在編輯: {{ form.name }}</span>
-                            <span v-else>新增商品</span>
-                        </h3>
-                        <button v-if="isEditing" @click="cancelEdit" class="absolute top-4 right-4 text-xs bg-gray-700 px-2 py-1 rounded">取消編輯</button>
+                <div v-if="adminTab === 'product'" class="space-y-6 animate-fadeIn">
+                    <div class="bg-[#1a1a1a] p-6 rounded-xl border border-gray-800 shadow-xl">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-white">{{ isEditing ? '✏️ 編輯商品' : '➕ 新增商品' }}</h3>
+                            <button v-if="isEditing" @click="cancelEdit" class="text-xs bg-gray-700 px-3 py-1.5 rounded-lg">取消編輯</button>
+                        </div>
 
-                        <div class="space-y-3">
-                            <div class="grid grid-cols-2 gap-2">
-                                <div class="flex items-center gap-2 bg-gray-900/50 p-2 rounded border border-gray-700">
-                                    <input v-model="form.isTop" type="checkbox" id="isTop" class="w-4 h-4 text-red-500 rounded focus:ring-red-500 border-gray-300 cursor-pointer">
-                                    <label for="isTop" class="text-xs font-bold text-red-400 cursor-pointer flex items-center gap-1"><i class="fas fa-fire"></i> 熱門置頂</label>
-                                </div>
-                                <div class="flex items-center gap-2 bg-gray-900/50 p-2 rounded border border-gray-700">
-                                    <input v-model="form.isFull" type="checkbox" id="isFull" class="w-4 h-4 text-orange-500 rounded focus:ring-orange-500 border-gray-300 cursor-pointer">
-                                    <label for="isFull" class="text-xs font-bold text-orange-400 cursor-pointer flex items-center gap-1"><i class="fas fa-clock"></i> 今日已滿</label>
-                                </div>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <label class="flex items-center justify-center gap-2 bg-black/40 border border-gray-700 p-3 rounded-lg cursor-pointer">
+                                    <input v-model="form.isTop" type="checkbox" class="accent-red-500">
+                                    <span class="text-sm font-bold text-red-400">熱門置頂</span>
+                                </label>
+                                <label class="flex items-center justify-center gap-2 bg-black/40 border border-gray-700 p-3 rounded-lg cursor-pointer">
+                                    <input v-model="form.isFull" type="checkbox" class="accent-orange-500">
+                                    <span class="text-sm font-bold text-orange-400">今日已滿</span>
+                                </label>
                             </div>
 
-                            <input v-model="form.name" type="text" class="w-full bg-black border border-gray-700 rounded p-2 text-white text-sm" placeholder="名字">
-                            <div class="grid grid-cols-2 gap-2">
-                                <input v-model="form.price" type="number" class="w-full bg-black border border-gray-700 rounded p-2 text-white text-sm" placeholder="價格">
-                                <input v-model="form.tags" type="text" class="w-full bg-black border border-gray-700 rounded p-2 text-white text-sm" placeholder="標籤">
-                            </div>
-                            <div class="grid grid-cols-3 gap-2">
-                                <input v-model="form.height" type="text" class="w-full bg-black border border-gray-700 rounded p-2 text-white text-sm" placeholder="身高">
-                                <input v-model="form.weight" type="text" class="w-full bg-black border border-gray-700 rounded p-2 text-white text-sm" placeholder="體重">
-                                <input v-model="form.cup" type="text" class="w-full bg-black border border-gray-700 rounded p-2 text-white text-sm" placeholder="罩杯">
-                            </div>
-                            <textarea v-model="form.imagesText" rows="3" class="w-full bg-black border border-gray-700 rounded p-2 text-xs text-green-400 font-mono" placeholder="圖片連結 (一行一張)"></textarea>
-                            <textarea v-model="form.details" rows="3" class="w-full bg-black border border-gray-700 rounded p-2 text-white text-sm" placeholder="詳細介紹"></textarea>
+                            <input v-model="form.name" type="text" class="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-500 outline-none" placeholder="名字">
                             
-                            <button @click="saveProduct" :class="isEditing ? 'bg-green-600 hover:bg-green-500' : 'bg-blue-600 hover:bg-blue-500'" class="w-full text-white font-bold py-2 rounded text-sm transition">
-                                <i class="fas" :class="isEditing ? 'fa-save' : 'fa-plus'"></i> {{ isEditing ? '儲存修改' : '新增商品' }}
+                            <div class="grid grid-cols-2 gap-3">
+                                <select v-model="form.city" @change="form.district = ''" class="w-full bg-black border border-gray-700 rounded-lg p-3 text-sm text-white focus:border-yellow-500 outline-none">
+                                    <option value="">選擇縣市</option>
+                                    <option v-for="(districts, city) in locations" :key="city" :value="city">{{ city }}</option>
+                                </select>
+                                <select v-model="form.district" :disabled="!form.city" class="w-full bg-black border border-gray-700 rounded-lg p-3 text-sm text-white focus:border-yellow-500 outline-none disabled:opacity-50">
+                                    <option value="">選擇鄉鎮區</option>
+                                    <option v-for="d in (locations[form.city] || [])" :key="d" :value="d">{{ d }}</option>
+                                </select>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <input v-model="form.price" type="number" class="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-500 outline-none" placeholder="價格">
+                                <input v-model="form.tags" type="text" class="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-500 outline-none" placeholder="標籤">
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-3">
+                                <input v-model="form.height" type="text" class="w-full bg-black border border-gray-700 rounded-lg p-3 text-white text-center" placeholder="身高">
+                                <input v-model="form.weight" type="text" class="w-full bg-black border border-gray-700 rounded-lg p-3 text-white text-center" placeholder="體重">
+                                <input v-model="form.cup" type="text" class="w-full bg-black border border-gray-700 rounded-lg p-3 text-white text-center" placeholder="罩杯">
+                            </div>
+
+                            <textarea v-model="form.imagesText" rows="3" class="w-full bg-black border border-gray-700 rounded-lg p-3 text-xs text-green-400 font-mono" placeholder="圖片連結 (一行一張)"></textarea>
+                            <textarea v-model="form.details" rows="3" class="w-full bg-black border border-gray-700 rounded-lg p-3 text-white text-sm" placeholder="詳細介紹"></textarea>
+                            
+                            <button @click="saveProduct" :class="isEditing ? 'bg-green-600 hover:bg-green-500' : 'bg-blue-600 hover:bg-blue-500'" class="w-full text-white font-bold py-4 rounded-xl transition shadow-lg">
+                                {{ isEditing ? '儲存修改' : '新增商品' }}
                             </button>
                         </div>
                     </div>
 
-                    <div class="mt-4">
-                        <h3 class="text-xs font-bold text-gray-500 mb-2 uppercase">現有商品 ({{ products.length }})</h3>
-                        <div class="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-                            <div v-for="p in products" :key="p.id" class="flex justify-between items-center bg-black p-2 rounded border border-gray-800 hover:border-gray-600 transition" :class="{'border-l-4 border-l-red-500': p.isTop, 'opacity-70': p.isFull}">
-                                <div class="flex items-center gap-2 w-2/3">
-                                    <div v-if="p.isFull" class="bg-orange-500 text-black text-[10px] px-1 rounded font-bold">滿</div>
-                                    <i v-else-if="p.isTop" class="fas fa-fire text-red-500 text-xs"></i>
-                                    <img :src="ensureArray(p.images)[0]" class="w-8 h-8 rounded object-cover flex-shrink-0">
-                                    <span class="text-sm truncate">{{ p.name }}</span>
+                    <div class="space-y-2 max-h-[500px] overflow-y-auto pr-2 hide-scrollbar">
+                        <div v-for="p in products" :key="p.id" class="flex justify-between items-center bg-[#1a1a1a] p-3 rounded-xl border border-gray-800 hover:border-gray-700 transition" :class="{'border-l-4 border-l-red-500': p.isTop, 'opacity-60': p.isFull}">
+                            <div class="flex items-center gap-3">
+                                <img :src="ensureArray(p.images)[0]" class="w-10 h-10 rounded-lg object-cover">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-bold">{{ p.name }}</span>
+                                    <span class="text-[10px] text-gray-500">{{ p.city }} {{ p.district }}</span>
                                 </div>
-                                <div class="flex gap-2">
-                                    <button @click="openEdit(p)" class="text-xs bg-gray-800 text-yellow-500 px-2 py-1 rounded hover:bg-gray-700 border border-gray-700">編輯</button>
-                                    <button @click="deleteProduct(p.id)" class="text-xs bg-red-900/30 text-red-400 px-2 py-1 rounded hover:bg-red-900">刪除</button>
-                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button @click="openEdit(p)" class="text-xs bg-gray-800 text-yellow-500 px-3 py-1.5 rounded-lg border border-gray-700 hover:bg-gray-700 transition">編輯</button>
+                                <button @click="deleteProduct(p.id)" class="text-xs bg-red-900/20 text-red-400 px-3 py-1.5 rounded-lg border border-red-900/30 hover:bg-red-900/40 transition">刪除</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div v-if="adminTab === 'layout'" class="space-y-4 animate-fadeIn">
-                    <div class="bg-black/50 p-4 rounded border border-gray-800">
-                        <label class="block text-xs font-bold text-yellow-500 mb-2">📢 跑馬燈公告文字</label>
-                        <input v-model="layoutForm.announcement" type="text" class="w-full bg-black border border-gray-700 rounded p-2 text-white text-sm">
+                    <div class="bg-[#1a1a1a] p-6 rounded-xl border border-gray-800 shadow-xl space-y-6">
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-yellow-500 mb-2">📢 跑馬燈公告</label>
+                            <input v-model="layoutForm.announcement" type="text" class="w-full bg-black border border-gray-700 rounded-lg p-3 text-white text-sm outline-none focus:border-yellow-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-blue-400 mb-2">📍 地區選單設定 (簡單清單模式)</label>
+                            <div class="bg-blue-900/20 p-3 rounded-lg border border-blue-900/30 mb-2">
+                                <p class="text-[10px] text-blue-300">格式：<strong class="text-white">縣市-區域</strong> (每一行一組)</p>
+                                <p class="text-[10px] text-blue-400">例如：<br>雲林縣-麥寮<br>雲林縣-虎尾<br>台中市-清水區</p>
+                            </div>
+                            <textarea v-model="layoutForm.locationsSimple" rows="8" class="w-full bg-black border border-gray-700 rounded-lg p-3 text-sm text-white font-mono outline-none focus:border-blue-500 transition" placeholder="縣市-區域"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-green-500 mb-2">🖼️ 首頁大圖輪播</label>
+                            <textarea v-model="layoutForm.bannersText" rows="6" class="w-full bg-black border border-gray-700 rounded-lg p-3 text-xs text-green-400 font-mono outline-none focus:border-green-500 transition" placeholder="圖片網址 (一行一個)"></textarea>
+                        </div>
+                        
+                        <button @click="saveLayoutSettings" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">
+                            儲存所有佈置設定
+                        </button>
                     </div>
-                    <div class="bg-black/50 p-4 rounded border border-gray-800">
-                        <label class="block text-xs font-bold text-yellow-500 mb-2">🖼️ 首頁大圖輪播</label>
-                        <textarea v-model="layoutForm.bannersText" rows="6" class="w-full bg-black border border-gray-700 rounded p-2 text-xs text-green-400 font-mono"></textarea>
-                    </div>
-                    <button @click="saveLayoutSettings" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded text-sm transition shadow-lg"><i class="fas fa-save mr-1"></i> 儲存設定</button>
                 </div>
             </div>
         </main>
@@ -126,15 +161,14 @@
         import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { createApp, ref, onMounted, nextTick } from "https://unpkg.com/vue@3/dist/vue.esm-browser.js";
 
-        // Firebase Config (請保持不變)
         const firebaseConfig = {
             apiKey: "AIzaSyCyqNcAlOlTsbwUVgpZSNr4q5hYkvq-eQQ",
-  authDomain: "haosongjkf.firebaseapp.com",
-  projectId: "haosongjkf",
-  storageBucket: "haosongjkf.firebasestorage.app",
-  messagingSenderId: "126135414816",
-  appId: "1:126135414816:web:84781ef106189ec5f5cc45",
-  measurementId: "G-PKYPK679KL"
+            authDomain: "haosongjkf.firebaseapp.com",
+            projectId: "haosongjkf",
+            storageBucket: "haosongjkf.firebasestorage.app",
+            messagingSenderId: "126135414816",
+            appId: "1:126135414816:web:84781ef106189ec5f5cc45",
+            measurementId: "G-PKYPK679KL"
         };
 
         createApp({
@@ -148,10 +182,10 @@
                 const user = ref(null);
                 const loginForm = ref({ email: '', password: '', captcha: '' });
                 const generatedCode = ref('');
+                const locations = ref({});
                 
-                // Form 新增 isFull
-                const form = ref({ name: '', price: '', tags: '', height: '', weight: '', cup: '', imagesText: '', details: '', isTop: false, isFull: false });
-                const layoutForm = ref({ bannersText: '', announcement: '' });
+                const form = ref({ name: '', price: '', tags: '', height: '', weight: '', cup: '', imagesText: '', details: '', isTop: false, isFull: false, city: '', district: '' });
+                const layoutForm = ref({ bannersText: '', announcement: '', locationsSimple: '' });
                 const isEditing = ref(false);
                 const editingId = ref(null);
 
@@ -180,43 +214,66 @@
                         user.value = currentUser;
                         if (!currentUser) nextTick(() => generateCaptcha());
                     });
-                    const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
-                    onSnapshot(q, (snapshot) => {
-                        const rawProducts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                        products.value = rawProducts.sort((a, b) => (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0));
+                    onSnapshot(query(collection(db, "products"), orderBy("createdAt", "desc")), (snapshot) => {
+                        products.value = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                     });
                     fetchLayoutSettings();
                 });
 
                 const login = async () => {
                     if (loginForm.value.captcha.toUpperCase() !== generatedCode.value) {
-                        alert("❌ 驗證碼錯誤"); loginForm.value.captcha = ''; generateCaptcha(); return;
+                        alert("❌ 驗證碼錯誤"); generateCaptcha(); return;
                     }
                     try {
                         await setPersistence(auth, browserSessionPersistence);
                         await signInWithEmailAndPassword(auth, loginForm.value.email, loginForm.value.password);
-                        alert("登入成功！");
                     } catch (error) { alert("登入失敗"); generateCaptcha(); }
                 };
 
-                const logout = async () => { await signOut(auth); alert("已登出"); cancelEdit(); nextTick(() => generateCaptcha()); };
+                const logout = async () => { await signOut(auth); cancelEdit(); };
                 
                 const fetchLayoutSettings = async () => {
                     try {
-                        const docRef = doc(db, "settings", "global");
-                        const docSnap = await getDoc(docRef);
+                        const docSnap = await getDoc(doc(db, "settings", "global"));
                         if (docSnap.exists()) {
                             layout.value = docSnap.data();
                             layoutForm.value.announcement = layout.value.announcement || '';
                             layoutForm.value.bannersText = (layout.value.banners || []).join('\n');
+                            locations.value = layout.value.locations || {};
+                            
+                            // 將 JSON 轉回 簡單清單格式 顯示在文字框內
+                            let simpleList = [];
+                            for (let city in locations.value) {
+                                locations.value[city].forEach(dist => {
+                                    simpleList.push(`${city}-${dist}`);
+                                });
+                            }
+                            layoutForm.value.locationsSimple = simpleList.join('\n');
                         }
                     } catch (e) {}
                 };
 
                 const saveLayoutSettings = async () => {
-                    if (!user.value) return alert("請先登入");
-                    const bannersArray = layoutForm.value.bannersText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                    try { await setDoc(doc(db, "settings", "global"), { announcement: layoutForm.value.announcement, banners: bannersArray }); alert("已儲存"); } catch (e) {}
+                    try {
+                        // 將 簡單清單 (縣市-區域) 轉回 JSON 物件
+                        const lines = layoutForm.value.locationsSimple.split('\n').filter(l => l.trim().includes('-'));
+                        const newLocations = {};
+                        lines.forEach(line => {
+                            const [city, dist] = line.split('-').map(s => s.trim());
+                            if (city && dist) {
+                                if (!newLocations[city]) newLocations[city] = [];
+                                if (!newLocations[city].includes(dist)) newLocations[city].push(dist);
+                            }
+                        });
+
+                        await setDoc(doc(db, "settings", "global"), { 
+                            announcement: layoutForm.value.announcement, 
+                            banners: layoutForm.value.bannersText.split('\n').filter(l => l.trim()),
+                            locations: newLocations
+                        });
+                        locations.value = newLocations;
+                        alert("佈置設定儲存成功！");
+                    } catch (e) { alert("儲存失敗，請檢查格式是否正確"); }
                 };
 
                 const ensureArray = (imgs) => Array.isArray(imgs) ? imgs : (imgs ? [imgs] : ['https://placehold.co/600x800']);
@@ -224,36 +281,27 @@
                 const openEdit = (item) => {
                     isEditing.value = true;
                     editingId.value = item.id;
-                    form.value = {
-                        name: item.name, price: item.price, tags: item.tags, height: item.height || '', weight: item.weight || '', cup: item.cup || '', details: item.details || '', imagesText: ensureArray(item.images).join('\n'),
-                        isTop: item.isTop || false,
-                        isFull: item.isFull || false // 載入滿檔狀態
-                    };
+                    form.value = { ...item, imagesText: ensureArray(item.images).join('\n') };
                 };
 
                 const cancelEdit = () => {
                     isEditing.value = false; editingId.value = null;
-                    form.value = { name: '', price: '', tags: '', height: '', weight: '', cup: '', imagesText: '', details: '', isTop: false, isFull: false };
+                    form.value = { name: '', price: '', tags: '', height: '', weight: '', cup: '', imagesText: '', details: '', isTop: false, isFull: false, city: '', district: '' };
                 };
 
                 const saveProduct = async () => {
-                    if (!user.value) return alert("請先登入");
-                    const imgs = form.value.imagesText.split('\n').map(l => l.trim()).filter(l => l);
-                    const productData = {
-                        name: form.value.name, price: form.value.price, tags: form.value.tags, height: form.value.height, weight: form.value.weight, cup: form.value.cup, details: form.value.details,
-                        isTop: form.value.isTop || false,
-                        isFull: form.value.isFull || false, // 儲存滿檔狀態
-                        images: imgs.length ? imgs : ['https://placehold.co/600x800']
-                    };
+                    const productData = { ...form.value, images: form.value.imagesText.split('\n').filter(l => l.trim()) };
+                    delete productData.imagesText;
                     try {
-                        if (isEditing.value && editingId.value) { await updateDoc(doc(db, "products", editingId.value), productData); alert("更新成功"); cancelEdit(); }
-                        else { await addDoc(collection(db, "products"), { ...productData, createdAt: new Date().toISOString() }); alert("新增成功"); cancelEdit(); }
-                    } catch (e) { alert("失敗: " + e.message); }
+                        if (isEditing.value) await updateDoc(doc(db, "products", editingId.value), productData);
+                        else await addDoc(collection(db, "products"), { ...productData, createdAt: new Date().toISOString() });
+                        alert("商品操作成功！"); cancelEdit();
+                    } catch (e) { alert("失敗"); }
                 };
 
-                const deleteProduct = async (id) => { if (user.value && confirm("確定刪除？")) await deleteDoc(doc(db, "products", id)); };
+                const deleteProduct = async (id) => { if (confirm("確定刪除？")) await deleteDoc(doc(db, "products", id)); };
 
-                return { products, layout, adminTab, form, layoutForm, ensureArray, saveProduct, deleteProduct, saveLayoutSettings, user, loginForm, login, logout, generateCaptcha, openEdit, cancelEdit, isEditing };
+                return { products, layout, adminTab, form, layoutForm, ensureArray, saveProduct, deleteProduct, saveLayoutSettings, user, loginForm, login, logout, generateCaptcha, openEdit, cancelEdit, isEditing, locations };
             }
         }).mount('#app');
     </script>
