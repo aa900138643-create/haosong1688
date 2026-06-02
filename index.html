@@ -21,11 +21,50 @@
         .snap-center { scroll-snap-align: center; }
         @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
         .toast-anim { animation: fadeIn 0.3s ease-out forwards; }
+        
+        /* 鎖定背景滾動的樣式 */
+        .overflow-hidden { overflow: hidden; }
     </style>
 </head>
-<body class="bg-[#111] text-white min-h-screen pb-20" oncontextmenu="return false">
+<body class="bg-[#111] text-white min-h-screen pb-20" :class="{'overflow-hidden': showAgeGate}" oncontextmenu="return false">
 
     <div id="app" v-cloak>
+        <!-- 18+ 年齡確認驗證彈窗 -->
+        <div v-if="showAgeGate" class="fixed inset-0 z-[999] bg-[#1d232a] flex flex-col items-center justify-center px-6 py-12 text-center select-none overflow-y-auto">
+            <div class="max-w-md w-full flex flex-col items-center">
+                <!-- 18+ 警告標誌 -->
+                <h1 class="text-7xl md:text-8xl font-extrabold text-[#e53e3e] tracking-tight mb-6">18+</h1>
+                
+                <!-- 標題 -->
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-8 tracking-wider">
+                    本區域依「電腦網路網際網路分級辦法」<br class="hidden sm:inline">歸類為限制級
+                </h2>
+                
+                <!-- 警語內文 -->
+                <p class="text-gray-300 text-sm md:text-base leading-relaxed text-justify mb-10 border-t border-b border-gray-700 py-6 px-2">
+                    限定為年滿18歲已具有完整行為能力且願接受本站內影音內容及各項條款之網友才可瀏覽，未滿18歲謝絕進入。為防範未滿18歲之未成年網友瀏覽網站上限制級內容的圖文資訊建議您可進行網路分級基金會TICRF分級服務的安裝與設定。依電腦網路內容分級法，未滿18歲不得瀏覽。
+                </p>
+                
+                <!-- 按鈕區塊 -->
+                <div class="flex flex-col sm:flex-row gap-4 w-full px-4">
+                    <!-- 我已經18歲按鈕 (換回白邊透明底) -->
+                    <button @click="confirmAge" class="flex-1 border-2 border-white text-white bg-transparent hover:bg-white/10 active:scale-95 text-lg font-bold py-3 px-6 rounded transition duration-200">
+                        我已經18歲
+                    </button>
+                    
+                    <!-- 未滿18歲按鈕與驚喜提示 (換回紅色背景) -->
+                    <div class="flex-1 flex flex-col items-center gap-1.5">
+                        <button @click="rejectAge" class="w-full bg-[#e53e3e] text-white hover:bg-[#c53030] active:scale-95 text-lg font-bold py-3 px-6 rounded transition duration-200">
+                            未滿18歲
+                        </button>
+                        <span @click="rejectAge" class="text-sm text-gray-400 hover:text-gray-200 hover:underline cursor-pointer tracking-wider">
+                            (點我有驚喜)
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <header class="fixed top-0 w-full z-40 bg-black/80 backdrop-blur-md border-b border-gray-800 p-4 flex justify-center items-center h-16">
             <img v-if="layout.logoUrl" :src="layout.logoUrl" class="h-10 object-contain" alt="Logo">
             <h1 v-else class="text-2xl font-bold text-yellow-500 tracking-widest">{{ config.siteName }}</h1>
@@ -96,7 +135,8 @@
                         <div v-if="item.isFull" class="absolute top-0 left-0 bg-[#FF8C42] text-white text-[10px] px-2 py-1 font-bold z-30">今日已滿</div>
                         <div v-if="item.isTop" class="absolute top-0 right-0 bg-gradient-to-l from-red-600 to-red-500 text-white text-[10px] font-bold px-2 py-1 z-20 flex items-center gap-1 rounded-bl-lg"><i class="fas fa-fire"></i> 熱門</div>
 
-                        <div class="relative w-full aspect-[3/4] overflow-hidden">
+                        <!-- 圖片區域：直接綁定點擊事件，確保手機端點擊照片能100%成功放大 -->
+                        <div @click.stop="openDetail(item)" class="relative w-full aspect-[3/4] overflow-hidden">
                             <div class="flex overflow-x-auto snap-x hide-scrollbar h-full w-full bg-gray-900">
                                 <div v-for="(media, index) in ensureArray(item.images)" :key="index" class="w-full h-full flex-shrink-0 snap-center relative">
                                     <video v-if="isVideo(media)" :src="media" class="w-full h-full object-cover" autoplay loop muted playsinline></video>
@@ -104,27 +144,37 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="p-3">
+                        
+                        <!-- 資訊欄位 -->
+                        <div class="p-3 relative">
                             <div class="flex justify-between items-start">
-                                <h3 class="font-bold text-lg text-white truncate" :class="item.isTop ? 'text-yellow-500' : ''">{{ item.name }}</h3>
+                                <h3 class="font-bold text-lg text-white truncate max-w-[65%]" :class="item.isTop ? 'text-yellow-500' : ''">{{ item.name }}</h3>
                                 <span class="text-yellow-500 font-bold text-sm">${{ item.price }}</span>
                             </div>
-                            <p class="text-xs text-gray-400 mt-1 truncate">{{ item.tags }}</p>
+                            <p class="text-xs text-gray-400 mt-1 truncate max-w-[65%]">{{ item.tags }}</p>
                             <p v-if="item.city" class="text-[10px] text-gray-500 mt-1"><i class="fas fa-map-marker-alt"></i> {{ item.city }} {{ item.district }}</p>
+                            
+                            <!-- 金色黑邊的「詳細資訊」框框：加上點擊事件加強響應 -->
+                            <div @click.stop="openDetail(item)" class="absolute bottom-3 right-3 bg-gradient-to-r from-yellow-500 to-yellow-400 text-black border border-black text-[10px] md:text-xs font-bold px-2 py-1 rounded shadow hover:scale-105 transition-transform duration-200">
+                                詳細資訊
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
 
+        <!-- 滿版大圖詳細資訊彈窗 -->
         <div v-if="detailModal.open && detailModal.product" class="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-black/90 backdrop-blur-sm">
             <button @click="closeDetail" class="absolute top-4 right-4 z-50 text-white bg-black/50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-700"><i class="fas fa-times text-xl"></i></button>
             <div class="bg-[#111] w-full h-full md:h-auto md:max-h-[90vh] md:max-w-4xl md:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl border border-gray-800">
-                <div class="w-full md:w-1/2 flex flex-col bg-black h-[40vh] md:h-auto">
-                    <div class="relative w-full flex-grow overflow-hidden bg-black">
+                <!-- 左側/上方：超大照片顯示區 -->
+                <div class="w-full md:w-1/2 flex flex-col bg-black h-[55vh] md:h-auto">
+                    <div class="relative w-full flex-grow overflow-hidden bg-black flex items-center justify-center">
                         <video v-if="isVideo(detailModal.currentImage)" :src="detailModal.currentImage" class="w-full h-full object-contain" autoplay loop playsinline controls></video>
-                        <img v-else :src="detailModal.currentImage" class="w-full h-full object-contain">
+                        <img v-else :src="detailModal.currentImage" class="max-w-full max-h-full object-contain">
                     </div>
+                    <!-- 下方縮圖切換區 -->
                     <div class="w-full h-20 bg-[#0a0a0a] border-t border-gray-800 flex items-center justify-center gap-2 px-4 overflow-x-auto hide-scrollbar flex-shrink-0">
                         <div v-for="(media, idx) in ensureArray(detailModal.product.images)" :key="idx" @click.stop="detailModal.currentImage = media" class="w-14 h-14 rounded border-2 overflow-hidden flex-shrink-0 cursor-pointer relative" :class="detailModal.currentImage === media ? 'border-yellow-500' : 'border-gray-600 opacity-50 hover:opacity-100'">
                             <i v-if="isVideo(media)" class="fas fa-play absolute inset-0 flex items-center justify-center text-white/80 text-xs z-10"></i>
@@ -132,7 +182,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="w-full md:w-1/2 p-6 flex flex-col h-[60vh] md:h-auto overflow-y-auto">
+                <!-- 右側/下方：妹妹詳細文字與預約按鈕 -->
+                <div class="w-full md:w-1/2 p-6 flex flex-col h-[45vh] md:h-auto overflow-y-auto">
                     <div v-if="detailModal.product.isFull" class="bg-orange-500 text-black text-center font-bold py-1 mb-2 rounded">⚠️ 今日已滿 ⚠️</div>
                     <h2 class="text-3xl font-bold text-yellow-500 mb-2">{{ detailModal.product.name }}</h2>
                     <div class="flex flex-wrap gap-2 mb-4 text-xs">
@@ -189,6 +240,9 @@
                 const selectedCity = ref('全部縣市');
                 const selectedDistrict = ref('全部鄉鎮區');
 
+                // 18禁年齡驗證狀態
+                const showAgeGate = ref(true);
+
                 // 地區資料現在由 layout 裡動態提供
                 const locations = computed(() => layout.value.locations || {});
 
@@ -211,6 +265,12 @@
                 const isVideo = (url) => url && (url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.webm'));
 
                 onMounted(() => {
+                    // 初始化時檢查本地儲存紀錄是否已驗證過18歲
+                    const isVerified = localStorage.getItem('age_verified');
+                    if (isVerified === 'true') {
+                        showAgeGate.value = false;
+                    }
+
                     // 監聽產品列表
                     onSnapshot(query(collection(db, "products"), orderBy("createdAt", "desc")), (snapshot) => {
                         products.value = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -248,11 +308,23 @@
                     }).catch(() => { window.location.href = config.value.lineUrl; });
                 };
 
+                // 點擊「我已經18歲」
+                const confirmAge = () => {
+                    localStorage.setItem('age_verified', 'true');
+                    showAgeGate.value = false;
+                };
+
+                // 點擊「未滿18歲」或驚喜提示
+                const rejectAge = () => {
+                    window.location.href = "https://www.youtube.com/watch?v=ESKTiYwV7iA&list=RDESKTiYwV7iA&start_radio=1";
+                };
+
                 return {
                     config, products, loading, layout, currentBannerIndex,
                     detailModal, toast, ensureArray, 
                     openDetail, closeDetail, handleBooking, isVideo,
-                    searchQuery, selectedCity, selectedDistrict, locations, availableDistricts, filteredProducts
+                    searchQuery, selectedCity, selectedDistrict, locations, availableDistricts, filteredProducts,
+                    showAgeGate, confirmAge, rejectAge
                 };
             }
         }).mount('#app');
