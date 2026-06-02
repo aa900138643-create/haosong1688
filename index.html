@@ -29,31 +29,24 @@
 <body class="bg-[#111] text-white min-h-screen pb-20" :class="{'overflow-hidden': showAgeGate}" oncontextmenu="return false">
 
     <div id="app" v-cloak>
-        <!-- 18+ 年齡確認驗證彈窗 -->
         <div v-if="showAgeGate" class="fixed inset-0 z-[999] bg-[#1d232a] flex flex-col items-center justify-center px-6 py-12 text-center select-none overflow-y-auto">
             <div class="max-w-md w-full flex flex-col items-center">
-                <!-- 18+ 警告標誌 -->
                 <h1 class="text-7xl md:text-8xl font-extrabold text-[#e53e3e] tracking-tight mb-6">18+</h1>
                 
-                <!-- 標題 -->
                 <h2 class="text-xl md:text-2xl font-bold text-white mb-8 tracking-wider">
                     本區域依「電腦網路網際網路分級辦法」<br class="hidden sm:inline">歸類為限制級
                 </h2>
                 
-                <!-- 警語內文 -->
                 <p class="text-gray-300 text-sm md:text-base leading-relaxed text-justify mb-10 border-t border-b border-gray-700 py-6 px-2">
                     限定為年滿18歲已具有完整行為能力且願接受本站內影音內容及各項條款之網友才可瀏覽，未滿18歲謝絕進入。為防範未滿18歲之未成年網友瀏覽網站上限制級內容的圖文資訊建議您可進行網路分級基金會TICRF分級服務的安裝與設定。依電腦網路內容分級法，未滿18歲不得瀏覽。
                 </p>
                 
-                <!-- 按鈕區塊 (位置對調：左邊未滿18歲/驚喜，右邊我已經18歲) -->
                 <div class="flex flex-col sm:flex-row gap-4 w-full px-4 items-stretch">
-                    <!-- 左邊：未滿18歲按鈕 (包含驚喜提示在同一個紅色大框框內) -->
                     <button @click="rejectAge" class="flex-1 bg-[#e53e3e] text-white hover:bg-[#c53030] active:scale-95 py-2.5 px-6 rounded transition duration-200 flex flex-col items-center justify-center gap-0.5 min-h-[64px]">
                         <span class="text-lg font-bold">未滿18歲</span>
                         <span class="text-xs text-white/80 tracking-wider font-normal">(點我有驚喜)</span>
                     </button>
                     
-                    <!-- 右邊：我已經18歲按鈕 (白邊透明底) -->
                     <button @click="confirmAge" class="flex-1 border-2 border-white text-white bg-transparent hover:bg-white/10 active:scale-95 text-lg font-bold py-2.5 px-6 rounded transition duration-200 flex items-center justify-center min-h-[64px]">
                         我已經18歲
                     </button>
@@ -131,7 +124,6 @@
                         <div v-if="item.isFull" class="absolute top-0 left-0 bg-[#FF8C42] text-white text-[10px] px-2 py-1 font-bold z-30">今日已滿</div>
                         <div v-if="item.isTop" class="absolute top-0 right-0 bg-gradient-to-l from-red-600 to-red-500 text-white text-[10px] font-bold px-2 py-1 z-20 flex items-center gap-1 rounded-bl-lg"><i class="fas fa-fire"></i> 熱門</div>
 
-                        <!-- 圖片區域[cite: 1] -->
                         <div @click.stop="openDetail(item)" class="relative w-full aspect-[3/4] overflow-hidden">
                             <div class="flex overflow-x-auto snap-x hide-scrollbar h-full w-full bg-gray-900">
                                 <div v-for="(media, index) in ensureArray(item.images)" :key="index" class="w-full h-full flex-shrink-0 snap-center relative">
@@ -141,7 +133,6 @@
                             </div>
                         </div>
                         
-                        <!-- 資訊欄位[cite: 1] -->
                         <div class="p-3 relative">
                             <div class="flex justify-between items-start">
                                 <h3 class="font-bold text-lg text-white truncate max-w-[65%]" :class="item.isTop ? 'text-yellow-500' : ''">{{ item.name }}</h3>
@@ -150,7 +141,6 @@
                             <p class="text-xs text-gray-400 mt-1 truncate max-w-[65%]">{{ item.tags }}</p>
                             <p v-if="item.city" class="text-[10px] text-gray-500 mt-1"><i class="fas fa-map-marker-alt"></i> {{ item.city }} {{ item.district }}</p>
                             
-                            <!-- 金色黑邊的「詳細資訊」框框[cite: 1] -->
                             <div @click.stop="openDetail(item)" class="absolute bottom-3 right-3 bg-gradient-to-r from-yellow-500 to-yellow-400 text-black border border-black text-[10px] md:text-xs font-bold px-2 py-1 rounded shadow hover:scale-105 transition-transform duration-200">
                                 詳細資訊
                             </div>
@@ -160,7 +150,6 @@
             </div>
         </main>
 
-        <!-- 滿版大圖詳細資訊彈窗[cite: 1] -->
         <div v-if="detailModal.open && detailModal.product" class="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-black/90 backdrop-blur-sm">
             <button @click="closeDetail" class="absolute top-4 right-4 z-50 text-white bg-black/50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-700"><i class="fas fa-times text-xl"></i></button>
             <div class="bg-[#111] w-full h-full md:h-auto md:max-h-[90vh] md:max-w-4xl md:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl border border-gray-800">
@@ -244,8 +233,12 @@
                     return locations.value[selectedCity.value] || [];
                 });
 
+                // 修改這區：在過濾時，直接加入「只要 item.isHidden 是 true 就過濾掉」的條件
                 const filteredProducts = computed(() => {
                     return products.value.filter(item => {
+                        // 如果商品資料庫欄位中的 isHidden 為 true，直接不顯示
+                        if (item.isHidden === true) return false;
+
                         const matchQuery = !searchQuery.value || 
                             (item.name && item.name.includes(searchQuery.value)) || 
                             (item.tags && item.tags.includes(searchQuery.value));
