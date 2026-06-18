@@ -28,13 +28,10 @@
             <h1 class="text-xl font-bold text-red-500 tracking-widest">後台管理模式</h1>
         </header>
 
-        <!-- 將外層改為 flex flex-col items-center，確保內部所有區塊都水平置中 -->
         <main class="pt-24 px-4 w-full flex flex-col items-center">
             
-            <!-- 限制內容最大寬度，並確保 mx-auto 居中 -->
             <div class="w-full max-w-2xl mx-auto space-y-6">
 
-                <!-- 登入區塊置中處理 -->
                 <div v-if="!user" class="py-10 text-center space-y-4 bg-[#1a1a1a] p-6 rounded-xl border border-gray-700 shadow-2xl max-w-md mx-auto">
                     <h2 class="text-2xl font-bold text-white mb-6">管理員登入</h2>
                     <input v-model="loginForm.email" type="email" class="w-full bg-black border border-gray-700 rounded p-3 text-white" placeholder="Email">
@@ -46,15 +43,12 @@
                     <button @click="login" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 rounded transition mt-4">登入系統</button>
                 </div>
 
-                <!-- 登入後的主管理面板 -->
                 <div v-else class="space-y-6 w-full">
-                    <!-- 歡迎欄 -->
                     <div class="flex justify-between items-center bg-gray-900/50 p-4 rounded-xl border border-gray-800 w-full">
                         <h2 class="text-xl font-bold text-white tracking-wide">歡迎回來 大帥哥老闆</h2>
                         <button @click="logout" class="text-xs text-red-400 border border-red-900/50 px-4 py-2 rounded-lg hover:bg-red-900/30 transition">登出</button>
                     </div>
 
-                    <!-- 分頁切換欄 -->
                     <div class="flex bg-[#1a1a1a] p-1 rounded-xl border border-gray-800 w-full">
                         <button @click="adminTab = 'product'" 
                             :class="adminTab === 'product' ? 'bg-gray-800 text-yellow-500 shadow-md' : 'text-gray-500 hover:text-gray-300'" 
@@ -68,9 +62,7 @@
                         </button>
                     </div>
 
-                    <!-- 商品管理分頁 -->
                     <div v-if="adminTab === 'product'" class="space-y-6 animate-fadeIn w-full">
-                        <!-- 新增/編輯表單 -->
                         <div class="bg-[#1a1a1a] p-6 rounded-xl border border-gray-800 shadow-xl w-full">
                             <div class="flex justify-between items-center mb-6">
                                 <h3 class="text-lg font-bold text-white">{{ isEditing ? '✏️ 編輯商品' : '➕ 新增商品' }}</h3>
@@ -122,8 +114,7 @@
                             </div>
                         </div>
 
-                        <!-- 下方商品列表（已完美置中且寬度同步） -->
-                        <div class="space-y-2 max-h-[500px] overflow-y-auto pr-2 hide-scrollbar w-full">
+                        <div class="space-y-2 max-h-[600px] overflow-y-auto pr-2 w-full border border-gray-800/40 p-2 rounded-xl bg-black/10">
                             <div v-for="p in products" :key="p.id" 
                                 class="flex justify-between items-center p-3 rounded-xl border border-gray-800 hover:border-gray-700 transition w-full" 
                                 :class="{
@@ -159,7 +150,6 @@
                         </div>
                     </div>
 
-                    <!-- 網站佈置分頁 -->
                     <div v-if="adminTab === 'layout'" class="space-y-4 animate-fadeIn w-full">
                         <div class="bg-[#1a1a1a] p-6 rounded-xl border border-gray-800 shadow-xl space-y-6 w-full">
                             <div>
