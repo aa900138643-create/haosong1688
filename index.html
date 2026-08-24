@@ -296,7 +296,7 @@
                 const isVideo = (url) => url && (url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.webm'));
 
                 onMounted(() => {
-                    const isVerified = localStorage.getItem('age_verified');
+                    const isVerified = sessionStorage.getItem('age_verified');
                     if (isVerified === 'true') {
                         showAgeGate.value = false;
                     }
@@ -350,7 +350,7 @@
                 };
 
                 const confirmAge = () => {
-                    localStorage.setItem('age_verified', 'true');
+                    sessionStorage.setItem('age_verified', 'true');
                     showAgeGate.value = false;
                 };
 
